@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOSTALGIA</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#128247;</text></svg>">
+</head>
+<body>
+    <!-- Upload Interface (for participants) -->
+    <div class="upload-interface" id="uploadInterface">
+        <header>
+            <h1>Nostalgia</h1>
+            <p class="subtitle">Collective Memory Archive</p>
+        </header>
+
+        <main>
+            <section class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-content">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <p class="upload-text">Drop your memory here</p>
+                        <p class="upload-or">or</p>
+                        <button class="upload-button" id="uploadButton">Select Image</button>
+                    </div>
+                </div>
+                <p class="upload-hint">Your image will appear on the projection wall</p>
+            </section>
+
+            <section class="gallery-section">
+                <p class="gallery-header">Archive</p>
+                <div class="gallery" id="gallery"></div>
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Loading</p>
+                </div>
+                <p class="empty-message" id="emptyMessage">No memories uploaded yet</p>
+            </section>
+        </main>
+
+        <footer class="controls-hint">
+            <p>Press <kbd>P</kbd> for projection mode</p>
+        </footer>
+    </div>
+
+    <!-- Projection Slideshow (for the wall) -->
+    <div class="slideshow" id="slideshow">
+        <div class="slideshow-image" id="slideshowImage"></div>
+        <div class="texture-overlay"></div>
+        <div class="slideshow-counter" id="slideshowCounter"></div>
+        <div class="new-upload-indicator" id="newUploadIndicator">
+            <span>New memory added</span>
+        </div>
+    </div>
+
+    <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
