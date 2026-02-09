@@ -8,15 +8,22 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#128247;</text></svg>">
 </head>
 <body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <a href="#upload" class="nav-link active" data-section="upload">Upload</a>
+        <a href="#archive" class="nav-link" data-section="archive">Archive</a>
+        <a href="#slideshow" class="nav-link" data-section="slideshow">Slideshow</a>
+    </nav>
+
     <!-- Upload Interface (for participants) -->
     <div class="upload-interface" id="uploadInterface">
         <header>
-            <h1>Nostalgia</h1>
-            <p class="subtitle">Collective Memory Archive</p>
+            <h1>Nostalgia and its making of time, place, and self.</h1>
         </header>
 
         <main>
-            <section class="upload-section">
+            <!-- Upload Section -->
+            <section class="upload-section section active" id="uploadSection">
                 <div class="upload-area" id="uploadArea">
                     <div class="upload-content">
                         <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -26,14 +33,14 @@
                         </svg>
                         <p class="upload-text">Drop your memory here</p>
                         <p class="upload-or">or</p>
-                        <button class="upload-button" id="uploadButton">Select Image</button>
+                        <button class="upload-button" id="uploadButton">Select Memory</button>
                     </div>
                 </div>
-                <p class="upload-hint">Your image will appear on the projection wall</p>
+                <p class="upload-hint">Your memory will be displayed and archived for others to see.</p>
             </section>
 
-            <section class="gallery-section">
-                <p class="gallery-header">Archive</p>
+            <!-- Archive Section -->
+            <section class="gallery-section section" id="archiveSection">
                 <div class="gallery" id="gallery"></div>
                 <div class="loading" id="loading">
                     <div class="spinner"></div>
@@ -42,10 +49,6 @@
                 <p class="empty-message" id="emptyMessage">No memories uploaded yet</p>
             </section>
         </main>
-
-        <footer class="controls-hint">
-            <p>Press <kbd>P</kbd> for projection mode</p>
-        </footer>
     </div>
 
     <!-- Projection Slideshow (for the wall) -->

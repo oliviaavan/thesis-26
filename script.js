@@ -18,6 +18,9 @@ const slideshow = document.getElementById('slideshow');
 const slideshowImage = document.getElementById('slideshowImage');
 const slideshowCounter = document.getElementById('slideshowCounter');
 const newUploadIndicator = document.getElementById('newUploadIndicator');
+const navLinks = document.querySelectorAll('.nav-link');
+const uploadSection = document.getElementById('uploadSection');
+const archiveSection = document.getElementById('archiveSection');
 
 // ============================================
 // State
@@ -42,6 +45,12 @@ function saveImage(imageUrl) {
     }
 }
 
+function removeImage(imageUrl) {
+    const images = getStoredImages();
+    const filtered = images.filter(url => url !== imageUrl);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+}
+
 // ============================================
 // Cloudinary Upload Widget
 // ============================================
@@ -61,24 +70,24 @@ function initUploadWidget() {
             tags: ['thesis-26'],
             styles: {
                 palette: {
-                    window: '#dcd8cf',
-                    windowBorder: '#b8b4ab',
-                    tabIcon: '#0f0e12',
-                    menuIcons: '#5a5852',
-                    textDark: '#0f0e12',
-                    textLight: '#0f0e12',
-                    link: '#0f0e12',
-                    action: '#0f0e12',
-                    inactiveTabIcon: '#5a5852',
+                    window: '#161616',
+                    windowBorder: '#3a3a3a',
+                    tabIcon: '#f0ece4',
+                    menuIcons: '#8a8a8a',
+                    textDark: '#f0ece4',
+                    textLight: '#f0ece4',
+                    link: '#f0ece4',
+                    action: '#d4d0c8',
+                    inactiveTabIcon: '#8a8a8a',
                     error: '#cc0000',
-                    inProgress: '#0f0e12',
+                    inProgress: '#f0ece4',
                     complete: '#006600',
-                    sourceBg: '#cdc9c0'
+                    sourceBg: '#111111'
                 },
                 fonts: {
                     default: null,
-                    "'Space Mono', monospace": {
-                        url: "https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700",
+                    "'Outfit', sans-serif": {
+                        url: "https://fonts.googleapis.com/css2?family=Outfit:wght@100..900",
                         active: true
                     }
                 }
@@ -113,6 +122,41 @@ function openUploadWidget() {
 }
 
 // ============================================
+// Navigation
+// ============================================
+function showSection(sectionName) {
+    // Hide all sections
+    uploadSection.classList.remove('active');
+    archiveSection.classList.remove('active');
+
+    // Update nav links
+    navLinks.forEach(link => link.classList.remove('active'));
+
+    // Show selected section
+    if (sectionName === 'upload') {
+        uploadSection.classList.add('active');
+        if (isProjectionMode) toggleProjectionMode();
+    } else if (sectionName === 'archive') {
+        archiveSection.classList.add('active');
+        if (isProjectionMode) toggleProjectionMode();
+    } else if (sectionName === 'slideshow') {
+        if (!isProjectionMode) toggleProjectionMode();
+    }
+
+    // Update active nav link
+    const activeLink = document.querySelector(`.nav-link[data-section="${sectionName}"]`);
+    if (activeLink) activeLink.classList.add('active');
+}
+
+navLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const section = link.dataset.section;
+        showSection(section);
+    });
+});
+
+// ============================================
 // Event Listeners
 // ============================================
 uploadButton.addEventListener('click', (e) => {
@@ -140,12 +184,9 @@ uploadArea.addEventListener('drop', (e) => {
 // Keyboard controls
 document.addEventListener('keydown', (e) => {
     switch(e.key.toLowerCase()) {
-        case 'p':
-            toggleProjectionMode();
-            break;
         case 'escape':
             if (isProjectionMode) {
-                toggleProjectionMode();
+                showSection('archive');
             }
             break;
         case 'arrowright':
@@ -182,7 +223,25 @@ function addImageToGallery(imageUrl) {
     img.alt = 'Uploaded memory';
     img.loading = 'lazy';
 
+    // Delete button for admin
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'delete-btn';
+    deleteBtn.innerHTML = '&times;';
+    deleteBtn.title = 'Remove from archive';
+    deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm('Remove this image from the archive?')) {
+            removeImage(imageUrl);
+            item.remove();
+            // Show empty message if no images left
+            if (getStoredImages().length === 0) {
+                emptyMessage.classList.add('visible');
+            }
+        }
+    });
+
     item.appendChild(img);
+    item.appendChild(deleteBtn);
     gallery.insertBefore(item, gallery.firstChild);
 }
 
@@ -213,6 +272,10 @@ function toggleProjectionMode() {
 
     if (isProjectionMode) {
         startSlideshow();
+        // Update nav state
+        navLinks.forEach(link => link.classList.remove('active'));
+        const slideshowLink = document.querySelector('.nav-link[data-section="slideshow"]');
+        if (slideshowLink) slideshowLink.classList.add('active');
     } else {
         stopSlideshow();
     }
