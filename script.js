@@ -5,6 +5,8 @@ const CLOUDINARY_CLOUD_NAME = 'dlfyn1oeq';
 const CLOUDINARY_UPLOAD_PRESET = 'THESIS-26';
 const STORAGE_KEY = 'nostalgia-exhibit-images';
 const SLIDESHOW_INTERVAL = 6000; // 6 seconds per image
+const ASSET_MAX_DURATION = 3000; // max 3 seconds for videos/gifs
+const PHOTO_EFFECTS = 'e_improve,e_auto_brightness,e_saturation:-40'; // normalize + desaturate per image
 
 // ============================================
 // DOM Elements
@@ -16,11 +18,11 @@ const loading = document.getElementById('loading');
 const emptyMessage = document.getElementById('emptyMessage');
 const slideshow = document.getElementById('slideshow');
 const slideshowImage = document.getElementById('slideshowImage');
-const slideshowCounter = document.getElementById('slideshowCounter');
 const newUploadIndicator = document.getElementById('newUploadIndicator');
 const navLinks = document.querySelectorAll('.nav-link');
 const uploadSection = document.getElementById('uploadSection');
 const archiveSection = document.getElementById('archiveSection');
+const siteHeader = document.getElementById('siteHeader');
 
 // ============================================
 // State
@@ -128,7 +130,7 @@ function initUploadWidget() {
             multiple: true,
             maxFiles: 10,
             resourceType: 'image',
-            clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+            clientAllowedFormats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif'],
             maxFileSize: 10000000,
             tags: ['thesis-26'],
             styles: {
@@ -196,6 +198,9 @@ function showSection(sectionName) {
     // Update nav links
     navLinks.forEach(link => link.classList.remove('active'));
 
+    // Show/hide header (only visible on upload)
+    siteHeader.style.display = sectionName === 'upload' ? '' : 'none';
+
     // Show selected section
     if (sectionName === 'upload') {
         uploadSection.classList.add('active');
@@ -219,6 +224,14 @@ navLinks.forEach(link => {
         showSection(section);
     });
 });
+
+// Mark header animation as done so it won't replay on navigation
+const headerH1 = document.querySelector('header h1');
+if (headerH1) {
+    headerH1.addEventListener('animationend', () => {
+        headerH1.classList.add('animation-done');
+    });
+}
 
 // ============================================
 // Event Listeners
@@ -366,7 +379,7 @@ function addImageToGallery(imageUrl) {
     }
 
     const img = document.createElement('img');
-    img.src = imageUrl.replace('/upload/', '/upload/c_fill,w_600,q_auto,f_auto/');
+    img.src = imageUrl.replace('/upload/', `/upload/c_fill,w_600,q_auto,f_auto,${PHOTO_EFFECTS}/`);
     img.alt = 'Uploaded memory';
     img.loading = 'lazy';
 
@@ -491,6 +504,22 @@ async function buildSlides() {
         built.push(portraitGroups[pIdx++]);
     }
 
+    // Insert asset slides (video & gif) evenly throughout
+    const assetSlides = [
+        { type: 'video', src: 'assets/sunflare.mp4' },
+        { type: 'gif', src: 'assets/spiral.gif' }
+    ];
+
+    if (built.length > 0) {
+        const gap = Math.max(1, Math.floor(built.length / (assetSlides.length + 1)));
+        for (let a = assetSlides.length - 1; a >= 0; a--) {
+            const pos = Math.min(gap * (a + 1), built.length);
+            built.splice(pos, 0, assetSlides[a]);
+        }
+    } else {
+        built.push(...assetSlides);
+    }
+
     return built;
 }
 
@@ -501,7 +530,6 @@ async function startSlideshow() {
     slides = await buildSlides();
 
     if (slides.length === 0) {
-        slideshowCounter.textContent = 'No images';
         return;
     }
 
@@ -535,17 +563,57 @@ function showSlide(index) {
     setTimeout(() => {
         slideshowImage.innerHTML = '';
         slideshowImage.style.backgroundImage = 'none';
+        slideshowImage.classList.remove('portrait-layout');
 
-        if (slide.type === 'landscape') {
-            const optimized = slide.url.replace('/upload/', '/upload/c_fit,w_1920,h_1080,q_auto,f_auto/');
+        if (slide.type === 'video') {
+            // Video slide — play full-screen, advance after max 3s or when it ends
+            clearInterval(slideshowTimer);
+            slideshowTimer = null;
+            const video = document.createElement('video');
+            video.src = slide.src;
+            video.className = 'slideshow-video';
+            video.muted = true;
+            video.playsInline = true;
+            video.autoplay = true;
+            let advanced = false;
+            const advanceOnce = () => {
+                if (advanced) return;
+                advanced = true;
+                video.pause();
+                nextSlide();
+                slideshowTimer = setInterval(() => nextSlide(), SLIDESHOW_INTERVAL);
+            };
+            video.addEventListener('ended', advanceOnce);
+            setTimeout(advanceOnce, ASSET_MAX_DURATION);
+            slideshowImage.appendChild(video);
+        } else if (slide.type === 'gif') {
+            // GIF slide — display full-screen for max 3s
+            clearInterval(slideshowTimer);
+            slideshowTimer = null;
+            const img = document.createElement('img');
+            img.src = slide.src;
+            img.className = 'slideshow-video';
+            img.alt = '';
+            slideshowImage.appendChild(img);
+            setTimeout(() => {
+                nextSlide();
+                slideshowTimer = setInterval(() => nextSlide(), SLIDESHOW_INTERVAL);
+            }, ASSET_MAX_DURATION);
+        } else if (slide.type === 'landscape') {
+            if (!slideshowTimer) {
+                slideshowTimer = setInterval(() => nextSlide(), SLIDESHOW_INTERVAL);
+            }
+            const optimized = slide.url.replace('/upload/', `/upload/c_fit,w_1920,h_1080,q_auto,f_auto,${PHOTO_EFFECTS}/`);
             slideshowImage.style.backgroundImage = `url('${optimized}')`;
-            slideshowImage.classList.remove('portrait-layout');
         } else {
             // Portrait group — render as side-by-side images
+            if (!slideshowTimer) {
+                slideshowTimer = setInterval(() => nextSlide(), SLIDESHOW_INTERVAL);
+            }
             slideshowImage.classList.add('portrait-layout');
             slide.urls.forEach(url => {
                 const img = document.createElement('img');
-                img.src = url.replace('/upload/', '/upload/c_fill,w_640,h_1080,q_auto,f_auto/');
+                img.src = url.replace('/upload/', `/upload/c_fill,w_640,h_1080,q_auto,f_auto,${PHOTO_EFFECTS}/`);
                 img.alt = 'Memory';
                 slideshowImage.appendChild(img);
             });
@@ -554,7 +622,6 @@ function showSlide(index) {
         slideshowImage.classList.remove('fade-out');
     }, 750);
 
-    slideshowCounter.textContent = `${index + 1} / ${slides.length}`;
 }
 
 function nextSlide() {
