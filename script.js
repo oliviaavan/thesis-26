@@ -3,7 +3,6 @@
 // ============================================
 const CLOUDINARY_CLOUD_NAME = 'dlfyn1oeq';
 const CLOUDINARY_UPLOAD_PRESET = 'THESIS-26';
-const STORAGE_KEY = 'nostalgia-exhibit-images';
 const SLIDESHOW_INTERVAL = 6000; // 6 seconds per image
 const ASSET_MAX_DURATION = 3000; // max 3 seconds for videos/gifs
 const PHOTO_EFFECTS = 'e_improve,e_auto_brightness,e_saturation:-40'; // normalize + desaturate per image
@@ -34,85 +33,41 @@ let isAdmin = false;
 const ADMIN_PASSWORD = 'thesis26';
 
 // ============================================
-// Local Storage for Image Data
+// Firebase Setup
 // ============================================
-// Each entry: { url, width, height } or legacy string "url"
-function getStoredImages() {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-}
+const firebaseConfig = {
+    apiKey: "AIzaSyCh2Dww6jHkhbZtRRxis3wkAjDukNoT6ms",
+    authDomain: "thesis-26.firebaseapp.com",
+    databaseURL: "https://thesis-26-default-rtdb.firebaseio.com",
+    projectId: "thesis-26",
+    storageBucket: "thesis-26.firebasestorage.app",
+    messagingSenderId: "780600080494",
+    appId: "1:780600080494:web:56c9a38b07b4f643c64e7f"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-function getImageUrl(entry) {
-    return typeof entry === 'string' ? entry : entry.url;
-}
-
-function isPortraitEntry(entry) {
-    if (typeof entry === 'object' && entry.width && entry.height) {
-        return entry.height > entry.width;
-    }
-    return null; // unknown — needs detection
-}
-
+// ============================================
+// Firebase Image Storage
+// ============================================
 function saveImage(imageUrl, width, height) {
-    const images = getStoredImages();
-    const exists = images.some(e => getImageUrl(e) === imageUrl);
-    if (!exists) {
-        images.unshift({ url: imageUrl, width, height });
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(images));
-    }
+    db.ref('images').push({ url: imageUrl, width, height, timestamp: Date.now() });
 }
 
 function removeImage(imageUrl) {
-    const images = getStoredImages();
-    const filtered = images.filter(e => getImageUrl(e) !== imageUrl);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    db.ref('images').orderByChild('url').equalTo(imageUrl).once('value', snapshot => {
+        snapshot.forEach(child => child.ref.remove());
+    });
 }
 
-// Migrate legacy string entries by detecting their dimensions
-async function migrateStoredImages() {
-    const images = getStoredImages();
-    let needsSave = false;
-
-    const migrated = await Promise.all(images.map(entry => {
-        if (typeof entry === 'string') {
-            needsSave = true;
-            return detectDimensions(entry).then(dims => ({
-                url: entry,
-                width: dims.width,
-                height: dims.height
-            }));
-        }
-        return Promise.resolve(entry);
-    }));
-
-    if (needsSave) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
-        console.log('[Storage] Migrated legacy entries with dimensions');
-    }
-    return migrated;
-}
-
-// Detect dimensions via tiny JPEG thumbnail
-function detectDimensions(url) {
+function fetchAllImages() {
     return new Promise((resolve) => {
-        const timer = setTimeout(() => {
-            console.warn('[Detect] Timeout:', url.slice(-25));
-            resolve({ width: 1920, height: 1080 }); // default landscape
-        }, 10000);
-
-        const img = new Image();
-        img.onload = () => {
-            clearTimeout(timer);
-            console.log('[Detect]', img.naturalWidth, 'x', img.naturalHeight, url.slice(-25));
-            resolve({ width: img.naturalWidth, height: img.naturalHeight });
-        };
-        img.onerror = () => {
-            clearTimeout(timer);
-            console.warn('[Detect] Error loading:', url.slice(-25));
-            resolve({ width: 1920, height: 1080 });
-        };
-        // Tiny JPEG — no f_auto, no crossOrigin — most compatible
-        img.src = url.replace('/upload/', '/upload/c_scale,w_10,f_jpg/');
+        db.ref('images').orderByChild('timestamp').once('value', snapshot => {
+            const data = snapshot.val();
+            if (!data) return resolve([]);
+            // newest first
+            resolve(Object.values(data).reverse());
+        });
     });
 }
 
@@ -396,7 +351,7 @@ function addImageToGallery(imageUrl) {
             if (confirm('Remove this image from the archive?')) {
                 removeImage(imageUrl);
                 item.remove();
-                if (getStoredImages().length === 0) {
+                if (gallery.querySelectorAll('.gallery-item').length === 0) {
                     emptyMessage.classList.add('visible');
                 }
             }
@@ -406,17 +361,15 @@ function addImageToGallery(imageUrl) {
     gallery.insertBefore(item, gallery.firstChild);
 }
 
-function loadGallery() {
+async function loadGallery() {
     loading.classList.add('visible');
     emptyMessage.classList.remove('visible');
     gallery.innerHTML = '';
 
-    const images = getStoredImages();
+    const images = await fetchAllImages();
 
     if (images.length > 0) {
-        images.forEach(entry => {
-            addImageToGallery(getImageUrl(entry));
-        });
+        images.forEach(entry => addImageToGallery(entry.url));
     } else {
         emptyMessage.classList.add('visible');
     }
@@ -445,15 +398,20 @@ function toggleProjectionMode() {
 
 // Build slides using stored dimensions — no guessing
 async function buildSlides() {
-    // Migrate legacy entries first (adds width/height to old string-only entries)
-    const images = await migrateStoredImages();
+    const images = await fetchAllImages();
     if (images.length === 0) return [];
+
+    // Shuffle into random order
+    for (let i = images.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [images[i], images[j]] = [images[j], images[i]];
+    }
 
     const landscapes = [];
     const portraits = [];
 
     for (const entry of images) {
-        const url = getImageUrl(entry);
+        const url = entry.url;
         const portrait = (entry.height && entry.width) ? entry.height > entry.width : false;
         console.log('[Slideshow]', portrait ? 'PORTRAIT' : 'LANDSCAPE',
             `(${entry.width}x${entry.height})`, url.slice(-25));
@@ -507,7 +465,11 @@ async function buildSlides() {
     // Insert asset slides (video & gif) evenly throughout
     const assetSlides = [
         { type: 'video', src: 'assets/sunflare.mp4' },
-        { type: 'gif', src: 'assets/spiral.gif' }
+        { type: 'video', src: 'assets/sunflare2.mp4' },
+        { type: 'gif', src: 'assets/spiral.gif' },
+        { type: 'gif', src: 'assets/lines.gif' },
+        { type: 'gif', src: 'assets/tree.gif' },
+        { type: 'gif', src: 'assets/wheat.gif' }
     ];
 
     if (built.length > 0) {
@@ -642,9 +604,8 @@ function showNewUploadIndicator() {
 // ============================================
 // Initialize
 // ============================================
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
     restoreAdminSession();
     initUploadWidget();
-    await migrateStoredImages();
     loadGallery();
 });
