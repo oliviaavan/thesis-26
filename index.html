@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NOSTALGIA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#128247;</text></svg>">
 </head>
@@ -18,12 +21,15 @@
     <!-- Upload Interface (for participants) -->
     <div class="upload-interface" id="uploadInterface">
         <header id="siteHeader">
-            <h1>Nostalgia and its making of time, place, and self.</h1>
+            <h1><img src="assets/title.png" alt="Nostalgia and the making of Time, Place, and Self"></h1>
         </header>
 
         <main>
             <!-- Upload Section -->
             <section class="upload-section section active" id="uploadSection">
+                <div class="upload-area-wrapper">
+                    <img src="assets/frame.png" alt="" class="upload-bg-frame">
+                    <img src="assets/frame.png" alt="" class="upload-bg-frame upload-bg-frame--right">
                 <div class="upload-area" id="uploadArea">
                     <div class="upload-content">
                         <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -35,6 +41,7 @@
                         <p class="upload-or">or</p>
                         <button class="upload-button" id="uploadButton">Select Memory</button>
                     </div>
+                </div>
                 </div>
                 <p class="upload-hint">Your memory will be displayed and archived for others to see.</p>
             </section>

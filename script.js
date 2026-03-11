@@ -90,8 +90,9 @@ function initUploadWidget() {
             tags: ['thesis-26'],
             styles: {
                 palette: {
-                    window: '#161616',
+                    window: '#111111',
                     windowBorder: '#3a3a3a',
+                    windowShadow: 'rgba(0,0,0,0.8)',
                     tabIcon: '#f0ece4',
                     menuIcons: '#8a8a8a',
                     textDark: '#f0ece4',
