@@ -3,7 +3,7 @@
 // ============================================
 const CLOUDINARY_CLOUD_NAME = 'dlfyn1oeq';
 const CLOUDINARY_UPLOAD_PRESET = 'THESIS-26';
-const SLIDESHOW_INTERVAL = 6000; // 6 seconds per image
+const SLIDESHOW_INTERVAL = 4000; // 4 seconds per image
 const ASSET_MAX_DURATION = 3000; // max 3 seconds for videos/gifs
 const PHOTO_EFFECTS = 'e_improve,e_auto_brightness,e_saturation:-40'; // normalize + desaturate per image
 
@@ -583,7 +583,7 @@ function showSlide(index) {
         }
 
         slideshowImage.classList.remove('fade-out');
-    }, 750);
+    }, 1200);
 
 }
 

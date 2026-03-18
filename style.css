@@ -241,12 +241,12 @@ main {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    filter: sepia(10%) contrast(1.05);
+    filter: grayscale(100%) contrast(1.05);
     transition: all 0.3s ease;
 }
 
 .gallery-item:hover img {
-    filter: sepia(5%) contrast(1);
+    filter: grayscale(100%) contrast(1);
     transform: scale(1.02);
 }
 
@@ -457,8 +457,8 @@ body.admin-mode .gallery-item:hover .delete-btn {
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
-    transition: opacity 1.5s ease-in-out;
-    filter: sepia(10%) contrast(1.05);
+    transition: opacity 2s cubic-bezier(0.5, 0, 0.5, 1);
+    filter: grayscale(100%) contrast(1.05);
 }
 
 /* Portrait group layout — side-by-side */
