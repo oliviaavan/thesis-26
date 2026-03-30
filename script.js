@@ -95,7 +95,7 @@ function initUploadWidget() {
                     windowShadow: 'rgba(0,0,0,0.8)',
                     tabIcon: '#f0ece4',
                     menuIcons: '#8a8a8a',
-                    textDark: '#f0ece4',
+                    textDark: '#000000',
                     textLight: '#f0ece4',
                     link: '#f0ece4',
                     action: '#d4d0c8',
@@ -212,6 +212,11 @@ uploadArea.addEventListener('drop', (e) => {
     e.preventDefault();
     uploadArea.classList.remove('dragover');
     openUploadWidget();
+});
+
+// Mobile exit button
+document.getElementById('slideshowExitBtn').addEventListener('click', () => {
+    showSection('archive');
 });
 
 // Keyboard controls
