@@ -592,8 +592,18 @@ function showSlide(index) {
 
 }
 
-function nextSlide() {
-    showSlide(currentSlideIndex + 1);
+async function nextSlide() {
+    const nextIndex = currentSlideIndex + 1;
+    // When we've looped through all slides, rebuild to pick up new uploads
+    if (nextIndex >= slides.length) {
+        const newSlides = await buildSlides();
+        if (newSlides.length > 0) {
+            slides = newSlides;
+        }
+        showSlide(0);
+    } else {
+        showSlide(nextIndex);
+    }
 }
 
 function prevSlide() {
